@@ -1,5 +1,5 @@
 {
-  "name": "@ascend/inertia-react",
+  "name": "inertia",
   "private": true,
   "workspaces": [
     "packages/*",
