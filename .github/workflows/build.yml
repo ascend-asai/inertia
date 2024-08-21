@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        adapter: ['react', 'vue2', 'vue3', 'svelte']
+        adapter: ['react']
 
     steps:
       - name: Checkout
@@ -37,3 +37,10 @@ jobs:
       - name: Build Playground
         run: |
           cd playgrounds/${{ matrix.adapter }} && npm run build
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts-${{ matrix.adapter }}
+          path: |
+            packages/${{ matrix.adapter }}/dist
