@@ -18,7 +18,7 @@ export interface InertiaFormProps<TForm extends FormDataType> {
   wasSuccessful: boolean
   recentlySuccessful: boolean
   setData: setDataByObject<TForm> & setDataByMethod<TForm> & setDataByKeyValuePair<TForm>
-  transform: (callback: (data: TForm) => object) => void
+  transform: (callback: (data: TForm) => TForm) => void
   setDefaults(): void
   setDefaults(field: keyof TForm, value: FormDataConvertible): void
   setDefaults(fields: Partial<TForm>): void
@@ -59,7 +59,7 @@ export default function useForm<TForm extends FormDataType>(
   const [progress, setProgress] = useState(null)
   const [wasSuccessful, setWasSuccessful] = useState(false)
   const [recentlySuccessful, setRecentlySuccessful] = useState(false)
-  let transform = (data) => data
+  const transformRef = useRef<(data: TForm) => Record<string, any>>(data => data)
 
   useEffect(() => {
     isMounted.current = true
@@ -69,7 +69,7 @@ export default function useForm<TForm extends FormDataType>(
   }, [])
 
   const submit = useCallback(
-    (method, url, options = {}) => {
+    (method: string, url: string, options: VisitOptions = {}) => {
       const _options = {
         ...options,
         onCancelToken: (token) => {
@@ -143,7 +143,7 @@ export default function useForm<TForm extends FormDataType>(
             return options.onCancel()
           }
         },
-        onFinish: () => {
+        onFinish: (visit) => {
           if (isMounted.current) {
             setProcessing(false)
             setProgress(null)
@@ -152,15 +152,15 @@ export default function useForm<TForm extends FormDataType>(
           cancelToken.current = null
 
           if (options.onFinish) {
-            return options.onFinish()
+            return options.onFinish(visit)
           }
         },
       }
 
       if (method === 'delete') {
-        router.delete(url, { ..._options, data: transform(data) })
+        router.delete(url, { ..._options, data: transformRef.current(data) })
       } else {
-        router[method](url, transform(data), _options)
+        router[method](url, transformRef.current(data), _options)
       }
     },
     [data, setErrors],
@@ -170,7 +170,7 @@ export default function useForm<TForm extends FormDataType>(
     data,
     setData(keyOrData: keyof TForm | Function | TForm, maybeValue?: TForm[keyof TForm]) {
       if (typeof keyOrData === 'string') {
-        setData((data) => ({ ...data, [keyOrData]: maybeValue }))
+        setData({ ...data, [keyOrData]: maybeValue })
       } else if (typeof keyOrData === 'function') {
         setData((data) => keyOrData(data))
       } else {
@@ -185,7 +185,7 @@ export default function useForm<TForm extends FormDataType>(
     wasSuccessful,
     recentlySuccessful,
     transform(callback) {
-      transform = callback
+      transformRef.current = callback
     },
     setDefaults(fieldOrFields?: keyof TForm | Partial<TForm>, maybeValue?: FormDataConvertible) {
       if (typeof fieldOrFields === 'undefined') {
