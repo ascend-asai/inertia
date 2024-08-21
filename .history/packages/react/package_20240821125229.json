@@ -1,5 +1,5 @@
 {
-  "name": "@ascend/inertia-react",
+  "name": "@inertiajs/react",
   "version": "1.2.0",
   "license": "MIT",
   "description": "The React adapter for Inertia.js",
